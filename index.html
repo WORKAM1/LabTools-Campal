@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabTrack · Suite Analítica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/diluciones.css">
+  <link rel="stylesheet" href="css/fireassay.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     TOPBAR GLOBAL
+══════════════════════════════════════════ -->
+<header class="app-topbar">
+  <div class="app-logo">
+    <div class="app-logo-dot"></div>
+    LabTrack
+    <span class="app-logo-sub">Suite Analítica</span>
+  </div>
+
+  <div class="module-tabs">
+    <button class="module-tab active" data-app="diluciones">
+      <span class="tab-icon">⚗</span>
+      <span class="tab-dot"></span>
+      <span>Diluciones</span>
+    </button>
+    <button class="module-tab" data-app="fireassay">
+      <span class="tab-icon">🔥</span>
+      <span class="tab-dot"></span>
+      <span>Fire Assay</span>
+    </button>
+  </div>
+
+  <div class="top-sep"></div>
+
+  <select class="lang-sel" id="langSel">
+    <option value="es" selected>🌐 Español</option>
+    <option value="en">🌐 English</option>
+    <option value="zh">🌐 中文</option>
+  </select>
+</header>
+
+<!-- ══════════════════════════════════════════
+     MÓDULO: DILUCIONES
+══════════════════════════════════════════ -->
+<div class="app-module active" id="mod-diluciones">
+
+  <!-- Sidebar curva de calibración -->
+  <aside class="dil-sidebar" id="dilSidebar">
+    <div class="dil-sidebar-inner">
+
+      <div class="dil-sb-section">
+        <div class="dil-sb-label" id="sid-title">Curva de calibración</div>
+        <button class="dil-toggle-btn on" id="togCurve">
+          <span class="dil-toggle-dot"></span>
+          <span id="togLabel">Gestión activa</span>
+        </button>
+      </div>
+
+      <div id="curveMgmt" class="dil-sb-section dil-sb-fields">
+
+        <div class="dil-field">
+          <label class="dil-field-label" id="sid-el">Elemento</label>
+          <select id="elCurva" class="dil-select">
+            <option value="litio">Litio</option>
+            <option value="sodio">Sodio</option>
+            <option value="potasio">Potasio</option>
+            <option value="icp">ICP</option>
+          </select>
+        </div>
+
+        <div class="dil-field" id="ptGroup">
+          <label class="dil-field-label" id="sid-pts">Puntos de la curva</label>
+          <div class="patron-grid" id="patronCont"></div>
+        </div>
+
+        <button class="dil-btn-calc" id="calcMid">Calcular punto medio</button>
+
+        <div class="dil-result-pill" id="rpill">
+          <span class="pill-label">Punto medio</span>
+          <span class="pill-value" id="rval">—</span>
+        </div>
+
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido principal diluciones -->
+  <div class="dil-main">
+
+    <!-- Header de sección -->
+    <div class="dil-page-header">
+      <div>
+        <div class="dil-eyebrow" id="eyebrow">Química analítica</div>
+        <h1 class="dil-title" id="mtitle">Cálculo de diluciones</h1>
+        <p class="dil-subtitle" id="msub">Seleccioná el modo de trabajo y calculá tus diluciones.</p>
+      </div>
+    </div>
+
+    <!-- Switcher de modo -->
+    <div class="dil-mode-switcher">
+      <button class="dil-mode-tab active" data-m="matraces">
+        <span class="dil-mode-icon">⚗</span>
+        <div class="dil-mode-info">
+          <span class="dil-mode-name" id="ml-matraces">Material de vidrio</span>
+          <span class="dil-mode-desc">Matraces 10–250 mL</span>
+        </div>
+      </button>
+      <button class="dil-mode-tab" data-m="tubos">
+        <span class="dil-mode-icon">🧪</span>
+        <div class="dil-mode-info">
+          <span class="dil-mode-name" id="ml-tubos">Tubos 10 mL</span>
+          <span class="dil-mode-desc">Volumen fijo</span>
+        </div>
+      </button>
+      <button class="dil-mode-tab" data-m="micro">
+        <span class="dil-mode-icon">🔬</span>
+        <div class="dil-mode-info">
+          <span class="dil-mode-name" id="ml-micro">Microdiluciones</span>
+          <span class="dil-mode-desc">C₁V₁ = C₂V₂</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- ─── PANEL MATRACES ─── -->
+    <div class="dil-panel" id="pan-matraces">
+      <div class="dil-panel-card">
+        <div class="dil-card-header">
+          <div class="dil-card-dot blue"></div>
+          <div>
+            <div class="dil-card-title" id="ct-m">Parámetros de entrada</div>
+            <div class="dil-card-sub">Material de vidrio · Matraces estándar</div>
+          </div>
+        </div>
+        <form id="fMat" class="dil-form">
+          <div class="dil-form-row">
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-elm">Elemento</label>
+              <select id="el-m" class="dil-select">
+                <option value="litio">Litio</option>
+                <option value="sodio">Sodio</option>
+                <option value="potasio">Potasio</option>
+                <option value="icp">ICP</option>
+              </select>
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-cm">Concentración inicial</label>
+              <input type="number" id="ci-m" class="dil-input" placeholder="0.0000" step="any">
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-fm">Factor de dilución</label>
+              <input type="number" id="fd-m" class="dil-input" value="50" step="any">
+            </div>
+          </div>
+          <div class="dil-form-actions">
+            <button type="submit" class="dil-btn-primary" id="bs-m">Calcular diluciones →</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Stats -->
+      <div class="dil-stats" id="sr-m" style="display:none">
+        <div class="dil-stat-card">
+          <div class="dil-stat-label" id="sl-elm">Elemento</div>
+          <div class="dil-stat-value accent" id="sv-elm">—</div>
+        </div>
+        <div class="dil-stat-card">
+          <div class="dil-stat-label" id="sl-midm">Punto medio</div>
+          <div class="dil-stat-value blue" id="sv-midm">—</div>
+        </div>
+        <div class="dil-stat-card">
+          <div class="dil-stat-label" id="sl-dim">Dilución inicial</div>
+          <div class="dil-stat-value amber" id="sv-dim">—</div>
+        </div>
+      </div>
+
+      <!-- Tabla resultados -->
+      <div class="dil-results-card" id="rc-m" style="display:none">
+        <div class="dil-results-header">
+          <span class="dil-results-title" id="rt-m">Opciones de dilución</span>
+          <span class="dil-results-badge">5 matraces</span>
+        </div>
+        <div class="dil-table-wrap">
+          <table class="dil-table">
+            <thead>
+              <tr>
+                <th id="th-fl">Matraz</th>
+                <th id="th-va">Volumen alícuota</th>
+                <th id="th-fa">Factor real</th>
+                <th id="th-st">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tb-m"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dil-empty" id="em-m">
+        <div class="dil-empty-icon">⚗</div>
+        <div class="dil-empty-title" id="et-m">Sin resultados aún</div>
+        <div class="dil-empty-sub" id="es-m">Ingresá los parámetros y presioná Calcular</div>
+      </div>
+    </div>
+
+    <!-- ─── PANEL TUBOS ─── -->
+    <div class="dil-panel" id="pan-tubos" style="display:none">
+      <div class="dil-info-banner teal" id="info-t">
+        <span class="dil-info-icon">🧪</span>
+        <span><strong>Modo tubos:</strong> El volumen final siempre es <strong>10 mL</strong>. Se calcula el volumen de muestra a pipetear y el solvente a agregar.</span>
+      </div>
+      <div class="dil-panel-card">
+        <div class="dil-card-header">
+          <div class="dil-card-dot teal"></div>
+          <div>
+            <div class="dil-card-title" id="ct-t">Parámetros de entrada</div>
+            <div class="dil-card-sub">Tubos de 10 mL · Volumen fijo</div>
+          </div>
+        </div>
+        <form id="fTub" class="dil-form">
+          <div class="dil-form-row">
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-elt">Elemento</label>
+              <select id="el-t" class="dil-select">
+                <option value="litio">Litio</option>
+                <option value="sodio">Sodio</option>
+                <option value="potasio">Potasio</option>
+                <option value="icp">ICP</option>
+              </select>
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-ct">Concentración inicial</label>
+              <input type="number" id="ci-t" class="dil-input" placeholder="0.0000" step="any">
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-ft">Factor de dilución</label>
+              <input type="number" id="fd-t" class="dil-input" value="50" step="any">
+            </div>
+          </div>
+          <div class="dil-form-actions">
+            <button type="submit" class="dil-btn-primary teal" id="bs-t">Calcular dilución →</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="dil-stats" id="sr-t" style="display:none">
+        <div class="dil-stat-card">
+          <div class="dil-stat-label" id="sl-elt">Elemento</div>
+          <div class="dil-stat-value accent" id="sv-elt">—</div>
+        </div>
+        <div class="dil-stat-card">
+          <div class="dil-stat-label">Punto medio</div>
+          <div class="dil-stat-value blue" id="sv-midt">—</div>
+        </div>
+        <div class="dil-stat-card">
+          <div class="dil-stat-label">Dilución inicial</div>
+          <div class="dil-stat-value amber" id="sv-dit">—</div>
+        </div>
+      </div>
+
+      <div class="dil-results-card" id="rc-t" style="display:none">
+        <div class="dil-results-header">
+          <span class="dil-results-title">Resultado · Tubo 10 mL</span>
+          <span class="dil-results-badge teal-badge">Volumen fijo</span>
+        </div>
+        <div class="dil-table-wrap">
+          <table class="dil-table">
+            <thead>
+              <tr>
+                <th>Contenedor</th>
+                <th id="th-at">Volumen alícuota</th>
+                <th id="th-sv">Agregar solvente</th>
+                <th id="th-ftr">Factor real</th>
+                <th id="th-stt">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tb-t"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dil-empty" id="em-t">
+        <div class="dil-empty-icon">🧪</div>
+        <div class="dil-empty-title">Sin resultados aún</div>
+        <div class="dil-empty-sub">Ingresá los parámetros y presioná Calcular</div>
+      </div>
+    </div>
+
+    <!-- ─── PANEL MICRO ─── -->
+    <div class="dil-panel" id="pan-micro" style="display:none">
+      <div class="dil-info-banner purple" id="info-mc">
+        <span class="dil-info-icon">🔬</span>
+        <span><strong>Microdiluciones:</strong> Ingresá la concentración stock (C₁) y la deseada (C₂). Volumen final configurable (por defecto <strong>10 mL</strong>).</span>
+      </div>
+      <div class="dil-panel-card">
+        <div class="dil-card-header">
+          <div class="dil-card-dot purple"></div>
+          <div>
+            <div class="dil-card-title" id="ct-mc">Parámetros de microdilución</div>
+            <div class="dil-card-sub">C₁V₁ = C₂V₂ · Volumen final 10 mL</div>
+          </div>
+        </div>
+        <form id="fMic" class="dil-form">
+          <div class="dil-form-row">
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-c1">Concentración stock (C₁)</label>
+              <input type="number" id="mc-c1" class="dil-input" placeholder="ej. 1000" step="any">
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-c2">Concentración deseada (C₂)</label>
+              <input type="number" id="mc-c2" class="dil-input" placeholder="ej. 5" step="any">
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-vf">Volumen final (mL)</label>
+              <input type="number" id="mc-vf" class="dil-input" value="10" step="any">
+            </div>
+            <div class="dil-field">
+              <label class="dil-field-label" id="ll-un">Unidad de concentración</label>
+              <select id="mc-un" class="dil-select">
+                <option value="mg/L">mg/L (ppm)</option>
+                <option value="µg/L">µg/L (ppb)</option>
+                <option value="µg/mL">µg/mL</option>
+                <option value="mmol/L">mmol/L</option>
+                <option value="mol/L">mol/L</option>
+              </select>
+            </div>
+          </div>
+          <div class="dil-form-actions">
+            <button type="submit" class="dil-btn-primary purple" id="bs-mc">Calcular microdilución →</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Resultado micro -->
+      <div class="dil-micro-result" id="mres" style="display:none">
+        <div class="dil-micro-grid">
+          <div class="dil-micro-block purple-block">
+            <div class="dil-micro-label" id="mbl-v1">Volumen a pipetear (V₁)</div>
+            <div class="dil-micro-val" id="mv1">—</div>
+            <div class="dil-micro-unit" id="mv1u">mL</div>
+          </div>
+          <div class="dil-micro-block teal-block">
+            <div class="dil-micro-label" id="mbl-vs">Agregar solvente</div>
+            <div class="dil-micro-val" id="mvs">—</div>
+            <div class="dil-micro-unit">mL</div>
+          </div>
+          <div class="dil-micro-block neutral-block">
+            <div class="dil-micro-label" id="mbl-vf">Volumen final</div>
+            <div class="dil-micro-val" id="mvf">—</div>
+            <div class="dil-micro-unit">mL</div>
+          </div>
+          <div class="dil-micro-block amber-block">
+            <div class="dil-micro-label" id="mbl-fd">Factor de dilución</div>
+            <div class="dil-micro-val" id="mfd">—</div>
+            <div class="dil-micro-unit">× dilución</div>
+          </div>
+        </div>
+        <div class="dil-steps-section">
+          <div class="dil-steps-title" id="mstt">Procedimiento paso a paso</div>
+          <div class="dil-steps-list" id="steplist"></div>
+        </div>
+      </div>
+
+      <div class="dil-empty" id="em-mc">
+        <div class="dil-empty-icon">🔬</div>
+        <div class="dil-empty-title">Sin resultados aún</div>
+        <div class="dil-empty-sub" id="es-mc">Ingresá C₁, C₂ y presioná Calcular</div>
+      </div>
+    </div>
+
+  </div><!-- end dil-main -->
+
+  <!-- Footer módulo diluciones -->
+  <footer class="app-footer">
+    <div class="footer-left">
+      <span class="footer-logo-dot"></span>
+      <span class="footer-brand">LabTrack · <strong>Módulo Diluciones</strong></span>
+    </div>
+    <div class="footer-right">Página / Informe — Propiedad de <strong>William Martin Campal</strong></div>
+  </footer>
+
+</div><!-- end mod-diluciones -->
+
+
+<!-- ══════════════════════════════════════════
+     MÓDULO: FIRE ASSAY
+══════════════════════════════════════════ -->
+<div class="app-module" id="mod-fireassay">
+
+  <nav class="fa-sidebar">
+    <div class="fa-sidebar-logo">
+      <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="12" stroke="var(--gold)" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="7" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <circle cx="14" cy="14" r="3" fill="var(--gold)"/>
+      </svg>
+      <div class="fa-logo-text">FireAssay<br><em>Pro</em></div>
+    </div>
+
+    <div class="fa-nav-section-label">MÓDULOS</div>
+    <ul class="fa-nav-list">
+      <li><a href="#" class="fa-nav-link active" data-section="registro">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="2" width="5" height="5" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="9" width="5" height="5" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" stroke="currentColor" stroke-width="1.2"/></svg>
+        Registro
+      </a></li>
+      <li><a href="#" class="fa-nav-link" data-section="resultados">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><polyline points="2,12 6,7 9,10 14,3" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        Resultados
+      </a></li>
+      <li><a href="#" class="fa-nav-link" data-section="procedimiento">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 2h10v12H3zM6 2v12" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1.2"/></svg>
+        Procedimiento
+      </a></li>
+      <li><a href="#" class="fa-nav-link" data-section="informe">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 2h6l4 4v8H4z" stroke="currentColor" stroke-width="1.2"/><path d="M10 2v4h4" stroke="currentColor" stroke-width="1.2"/><line x1="6" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.2"/></svg>
+        Informe PDF
+      </a></li>
+    </ul>
+
+    <div class="fa-nav-section-label" style="margin-top:auto">LABORATORIO</div>
+    <div class="fa-lab-card">
+      <label class="fa-small-label">LOGO DEL LAB</label>
+      <div class="fa-logo-upload" id="logoArea">
+        <input type="file" id="logoInput" accept="image/*" hidden>
+        <div class="fa-logo-placeholder" id="logoPlaceholder">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.2"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>Subir logo</span>
+        </div>
+        <img id="logoPreview" src="" alt="Logo" hidden>
+      </div>
+      <input type="text" id="labName" class="fa-lab-input" placeholder="Nombre del laboratorio">
+      <input type="text" id="analystName" class="fa-lab-input" placeholder="Analista responsable">
+    </div>
+  </nav>
+
+  <div class="fa-main">
+    <header class="fa-topbar">
+      <div class="fa-topbar-left">
+        <h1 class="fa-page-title" id="pageTitle">Registro de Muestras</h1>
+        <div class="fa-breadcrumb">Fire Assay / Doré / <span id="breadcrumbSub">Nuevo Análisis</span></div>
+      </div>
+      <div class="fa-topbar-right">
+        <div class="fa-session-info">
+          <span class="fa-session-date" id="sessionDate"></span>
+          <span class="fa-batch-counter">Lote: <strong id="batchId"></strong></span>
+        </div>
+        <button class="fa-btn-new-batch" onclick="nuevaSession()">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.5"/></svg>
+          Nuevo Lote
+        </button>
+      </div>
+    </header>
+
+    <div class="fa-content">
+
+      <!-- SECCIÓN REGISTRO -->
+      <section class="fa-section active" id="section-registro">
+        <div class="fa-stats-row">
+          <div class="fa-stat-card"><div class="fa-stat-val" id="statTotal">0</div><div class="fa-stat-lbl">Muestras en lote</div></div>
+          <div class="fa-stat-card gold"><div class="fa-stat-val" id="statAvgAu">—</div><div class="fa-stat-lbl">% Au promedio</div></div>
+          <div class="fa-stat-card"><div class="fa-stat-val" id="statAvgKt">—</div><div class="fa-stat-lbl">Kilates promedio</div></div>
+          <div class="fa-stat-card"><div class="fa-stat-val" id="statAvgImp">—</div><div class="fa-stat-lbl">% Impurezas prom.</div></div>
+        </div>
+        <div class="fa-form-grid">
+          <div class="fa-form-card">
+            <div class="fa-form-header"><div class="fa-step-badge">01</div><div><h3>Datos de Muestra</h3><p>Identificación y peso inicial</p></div></div>
+            <div class="fa-fields">
+              <div class="fa-field"><label>ID / Código de Muestra</label><input type="text" id="idMuestra" placeholder="ej. FA-2024-001" autocomplete="off"></div>
+              <div class="fa-field-row">
+                <div class="fa-field"><label>Peso virutas (g)</label><input type="number" id="pesoVirutas" placeholder="0.000" step="0.001" min="0"></div>
+                <div class="fa-field"><label>Plomo agregado (g)</label><input type="number" id="pesoPlomo" value="30" step="0.1" min="0"><span class="fa-hint">Estándar: 30 g</span></div>
+              </div>
+              <div class="fa-field"><label>Peso Doré post-copelación (g)</label><input type="number" id="pesoDore" placeholder="0.000" step="0.0001" min="0" oninput="calcularEncuarte()"><span class="fa-hint">Botón resultante de la primera copelación</span></div>
+            </div>
+          </div>
+          <div class="fa-form-card">
+            <div class="fa-form-header"><div class="fa-step-badge">02</div><div><h3>Cuarteo (Parting)</h3><p>Separación de Au / Ag</p></div></div>
+            <div class="fa-fields">
+              <div class="fa-encuarte-box"><div class="fa-formula-label">PLATA REQUERIDA</div><div class="fa-formula-val">Doré × 4 = <strong id="plataAuto">—</strong> g</div></div>
+              <div class="fa-field-row">
+                <div class="fa-field"><label>Plata real agregada (g)</label><input type="number" id="plataReal" placeholder="0.000" step="0.0001" min="0"><span class="fa-hint">Pesar con 4 decimales</span></div>
+              </div>
+              <div class="fa-field"><label>Doré encuartado post-copelación (g)</label><input type="number" id="doreFinal" placeholder="0.000" step="0.0001" min="0"></div>
+              <div class="fa-field-row">
+                <div class="fa-field"><label>Peso laminado (g)</label><input type="number" id="pesoLaminado" placeholder="0.000" step="0.0001" min="0"></div>
+              </div>
+            </div>
+          </div>
+          <div class="fa-form-card">
+            <div class="fa-form-header"><div class="fa-step-badge">03</div><div><h3>Oro Final</h3><p>Post-digestión ácida y templado</p></div></div>
+            <div class="fa-fields">
+              <div class="fa-field"><label>Peso oro final (g)</label><input type="number" id="oroFinal" placeholder="0.000" step="0.00001" min="0" oninput="calcularResultados()"><span class="fa-hint">Tras digestión HNO₃ + templado</span></div>
+              <div class="fa-field"><label>Observaciones</label><textarea id="observaciones" placeholder="Notas del analista..." rows="3"></textarea></div>
+              <div class="fa-result-preview">
+                <div class="fa-prev-item"><span>% Au</span><strong id="prevAu">—</strong></div>
+                <div class="fa-prev-item"><span>Kilates</span><strong id="prevKt">—</strong></div>
+                <div class="fa-prev-item"><span>% Ag+Imp</span><strong id="prevImp">—</strong></div>
+              </div>
+              <button class="fa-btn-primary" onclick="guardarMuestra()">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><polyline points="2,7 6,11 12,3" stroke="currentColor" stroke-width="2"/></svg>
+                Registrar Muestra
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN RESULTADOS -->
+      <section class="fa-section" id="section-resultados">
+        <div class="fa-controls-bar">
+          <input type="text" id="filterInput" class="fa-filter-input" placeholder="Buscar por ID..." oninput="filtrarTabla()">
+          <button class="fa-btn-secondary" onclick="exportarCSV()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 2v8M4 7l3 3 3-3" stroke="currentColor" stroke-width="1.5"/><path d="M2 11h10" stroke="currentColor" stroke-width="1.5"/></svg>
+            Exportar CSV
+          </button>
+          <button class="fa-btn-danger" onclick="limpiarLote()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5"/></svg>
+            Limpiar lote
+          </button>
+        </div>
+        <div class="fa-table-wrap">
+          <table class="fa-table" id="tablaResultados">
+            <thead><tr><th>#</th><th>ID Muestra</th><th>Virutas (g)</th><th>Doré (g)</th><th>Plata Teórica (g)</th><th>Plata Real (g)</th><th>Doré Enc. (g)</th><th>Laminado (g)</th><th>Au Final (g)</th><th>% Au</th><th>Kilates</th><th>% Ag+Imp</th><th></th></tr></thead>
+            <tbody id="tbodyResultados">
+              <tr class="fa-empty-row"><td colspan="13"><div class="fa-empty-state"><svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/><line x1="20" y1="12" x2="20" y2="28" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="20" x2="28" y2="20" stroke="currentColor" stroke-width="1.5"/></svg><p>Ninguna muestra registrada aún</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECCIÓN PROCEDIMIENTO -->
+      <section class="fa-section" id="section-procedimiento">
+        <div class="fa-proc-container">
+          <div class="fa-proc-intro">
+            <h2>Ensayo de Fuego para Doré</h2>
+            <p class="fa-proc-subtitle">Método analítico oficial para determinación de pureza en lingotes de Au/Ag</p>
+            <div class="fa-proc-meta">
+              <span>Método: Fire Assay / Parting</span>
+              <span>Matriz: Lingote Doré</span>
+              <span>Analitos: Au, Ag, Impurezas</span>
+            </div>
+          </div>
+          <div class="fa-steps">
+            <div class="fa-step"><div class="fa-step-num">1</div><div class="fa-step-body"><h4>Toma de muestra y pesada inicial</h4><p>Virutas del lingote Doré obtenidas por fresado o limado. Pesadas con precisión de 0.001 g. Muestra típica: 0.5–2 g.</p><div class="fa-step-note"><strong>Precaución:</strong> Evitar contaminación cruzada. Limpiar la fresa entre muestras.</div></div></div>
+            <div class="fa-step"><div class="fa-step-num">2</div><div class="fa-step-body"><h4>Preparación para copelación inicial</h4><p>Envolver las virutas en plomo metálico de alta pureza (≥99.99% Pb), usando aproximadamente <strong>30 g de plomo</strong> por muestra.</p></div></div>
+            <div class="fa-step"><div class="fa-step-num">3</div><div class="fa-step-body"><h4>Primera copelación — Formación del botón Doré</h4><p>Copelas de cemento hueso precalentadas a 950–1000°C. El plomo se oxida y absorbe en la copela, dejando el botón de metales preciosos.</p><div class="fa-step-note"><strong>Temperatura:</strong> Mantener entre 950–1050°C. Exceso causa pérdidas por volatilización de Ag.</div></div></div>
+            <div class="fa-step"><div class="fa-step-num">4</div><div class="fa-step-body"><h4>Pesada del botón Doré</h4><p>Una vez enfriado, pesar con precisión de <strong>0.0001 g</strong>. Representa la suma de Au + Ag + impurezas.</p></div></div>
+            <div class="fa-step"><div class="fa-step-num">5</div><div class="fa-step-body"><h4>Cálculo y preparación del encuarte</h4><p>Proporción óptima <strong>4:1 (Ag/Au)</strong>.</p><div class="fa-formula">m(Ag) = Peso Doré × 4</div></div></div>
+            <div class="fa-step"><div class="fa-step-num">6</div><div class="fa-step-body"><h4>Segunda copelación — Doré encuartado</h4><p>Botón + plata pura re-envueltos en plomo (~10 g) y copelados nuevamente. Resultado: aleación con alta proporción de Ag.</p></div></div>
+            <div class="fa-step"><div class="fa-step-num">7</div><div class="fa-step-body"><h4>Laminado del botón encuartado</h4><p>Aplanar el botón a 0.2–0.4 mm de espesor. Facilita el acceso del ácido.<div class="fa-step-note"><strong>Técnica:</strong> Golpes suaves y uniformes en frío.</div></p></div></div>
+            <div class="fa-step"><div class="fa-step-num">8</div><div class="fa-step-body"><h4>Digestión ácida — Parting</h4><p><strong>HNO₃ diluido caliente (1:3, 30–40%)</strong> a 70–80°C. 2–3 digestiones sucesivas hasta ácido incoloro.</p><div class="fa-step-note"><strong>Seguridad:</strong> Campana extractora. EPP obligatorio: guantes, lentes, delantal.</div></div></div>
+            <div class="fa-step"><div class="fa-step-num">9</div><div class="fa-step-body"><h4>Templado y pesada final del oro</h4><p>Calcinar en mufla a 700–750°C × 5 min, enfriar en desecador, pesar con precisión de <strong>0.00001 g</strong>.</p></div></div>
+            <div class="fa-step"><div class="fa-step-num">10</div><div class="fa-step-body"><h4>Cálculos analíticos finales</h4><div class="fa-formula">% Au = (Peso Au Final / Peso Doré) × 100</div><div class="fa-formula">Kilates = (% Au / 100) × 24</div><div class="fa-formula">% Ag + Impurezas = 100 − % Au</div><div class="fa-step-note"><strong>Nota:</strong> Para desglosar Ag de impurezas se requiere ICP-OES o AAS.</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN INFORME -->
+      <section class="fa-section" id="section-informe">
+        <div class="fa-report-controls">
+          <h3>Configuración del Informe</h3>
+          <div class="fa-report-opts">
+            <div class="fa-field"><label>Título del informe</label><input type="text" id="reportTitle" value="Informe de Análisis de Doré — Fire Assay"></div>
+            <div class="fa-field"><label>Fecha del análisis</label><input type="date" id="reportDate"></div>
+            <div class="fa-field"><label>Proyecto / Cliente</label><input type="text" id="reportProject" placeholder="Nombre del proyecto o cliente"></div>
+          </div>
+          <button class="fa-btn-primary" style="width:auto;padding:10px 28px;" onclick="generarPDF()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M4 2h4l4 4v6H4z" stroke="currentColor" stroke-width="1.2"/><path d="M8 2v4h4" stroke="currentColor" stroke-width="1.2"/></svg>
+            Generar PDF
+          </button>
+        </div>
+        <div class="fa-report-preview">
+          <div class="fa-report-doc" id="reportDoc">
+            <div class="fa-report-head-row">
+              <div class="fa-report-logo-area"><img id="reportLogo" src="" alt="" style="display:none;max-height:64px;max-width:140px;"><div id="reportLogoPlaceholder" class="fa-report-logo-ph">LOGO</div></div>
+              <div><div class="fa-report-main-title" id="reportMainTitle">Informe de Análisis de Doré</div><div class="fa-report-sub-title">Método: Ensayo de Fuego — Fire Assay / Parting</div></div>
+              <div class="fa-report-meta">
+                <div class="fa-report-meta-item"><span>LOTE</span><strong id="reportBatchId">—</strong></div>
+                <div class="fa-report-meta-item"><span>FECHA</span><strong id="reportDateDisplay">—</strong></div>
+                <div class="fa-report-meta-item"><span>ANALISTA</span><strong id="reportAnalyst">—</strong></div>
+              </div>
+            </div>
+            <div class="fa-report-section-title">RESUMEN EJECUTIVO DEL LOTE</div>
+            <div class="fa-report-summary" id="reportSummaryGrid"></div>
+            <div class="fa-report-section-title">RESULTADOS ANALÍTICOS — DETALLE POR MUESTRA</div>
+            <table class="fa-report-table" id="reportTable">
+              <thead><tr><th>ID Muestra</th><th>Virutas (g)</th><th>Doré (g)</th><th>Plata Enc. (g)</th><th>Au Final (g)</th><th>% Au</th><th>Kilates</th><th>% Ag+Imp</th><th>Clasificación</th></tr></thead>
+              <tbody id="reportTableBody"></tbody>
+            </table>
+            <div class="fa-report-section-title">DISTRIBUCIÓN DE PUREZA</div>
+            <div class="fa-report-chart"><canvas id="reportChart" width="640" height="160"></canvas></div>
+            <div class="fa-report-footer">
+              <div><div class="fa-report-footer-label">LABORATORIO</div><div class="fa-report-footer-val" id="reportLabName">—</div></div>
+              <div><div class="fa-report-footer-label">PROYECTO / CLIENTE</div><div class="fa-report-footer-val" id="reportProject2">—</div></div>
+              <div class="fa-sig-col"><div class="fa-sig-line"></div><div class="fa-report-footer-label">FIRMA DEL ANALISTA</div></div>
+            </div>
+            <div class="fa-report-copyright">LABTRACK · FIRE ASSAY PRO — PROPIEDAD DE WILLIAM MARTIN CAMPAL</div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end fa-content -->
+
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="footer-logo-dot gold"></span>
+        <span class="footer-brand">LabTrack · <strong>Fire Assay Pro</strong></span>
+      </div>
+      <div class="footer-right">Página / Informe — Propiedad de <strong>William Martin Campal</strong></div>
+    </footer>
+  </div><!-- end fa-main -->
+
+</div><!-- end mod-fireassay -->
+
+<!-- Toast -->
+<div class="fa-toast" id="toast"></div>
+
+<script src="js/diluciones.js"></script>
+<script src="js/fireassay.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
